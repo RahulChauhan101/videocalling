@@ -22,12 +22,27 @@ const nouns = [
   'frog', 'smoke', 'star'
 ];
 
-module.exports = () => {
+const { db } = require('../config/firebase');
+const { addDoc, collection } = require('firebase/firestore');
+
+module.exports = async () => {
   const adj = adjs[Math.floor(Math.random() * adjs.length)];
   const noun = nouns[Math.floor(Math.random() * nouns.length)];
   const MIN = 1000;
   const MAX = 9999;
   const num = Math.floor(Math.random() * ((MAX + 1) - MIN)) + MIN;
 
-  return `${adj}-${noun}-${num}`;
+  const callerId = `${adj}-${noun}-${num}`;
+
+  try {
+    // Store the caller ID in Firebase
+    await addDoc(collection(db, 'callerIds'), {
+      id: callerId,
+      createdAt: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error storing caller ID:', error);
+  }
+
+  return callerId;
 };
