@@ -36,6 +36,13 @@ module.exports = {
         ]
       },
       {
+        test: /\.css$/,
+        use: [
+          MiniCssExtractPlugin.loader,
+          'css-loader'
+        ]
+      },
+      {
         test: /\.(png|woff|woff2|eot|ttf|svg)$/,
         use: [
           {
@@ -51,18 +58,22 @@ module.exports = {
     ]
   },
   plugins: [
-    new MiniCssExtractPlugin({ filename: 'css/[name].min.css' }),
     new HtmlWebpackPlugin({
       title: 'React VideoCall - Minh Son Nguyen',
       filename: 'index.html',
       template: 'src/html/index.html'
+    }),
+    new MiniCssExtractPlugin({
+      filename: 'css/[name].min.css'
     })
   ],
   optimization: {
     minimizer: [
       new TerserPlugin({
         parallel: true,
-        terserOptions: { ecma: 6 }
+        terserOptions: {
+          ecma: 6
+        }
       })
     ]
   }
