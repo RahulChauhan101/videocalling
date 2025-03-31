@@ -1,0 +1,76 @@
+.recent-calls {
+  margin-top: 20px;
+  padding: 15px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 500px;
+}
+
+.recent-calls h4 {
+  margin-bottom: 15px;
+  color: #333;
+}
+
+.calls-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.call-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  background: white;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.call-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.caller-id {
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.call-time {
+  font-size: 0.85em;
+  color: #7f8c8d;
+}
+
+.call-status {
+  font-size: 0.85em;
+  padding: 2px 6px;
+  border-radius: 4px;
+  width: fit-content;
+}
+
+.call-status.active {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.call-status.ended {
+  background: #eeeeee;
+  color: #616161;
+}
+
+.call-button {
+  padding: 6px 12px;
+  background: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.call-button:hover {
+  background: #388E3C;
+}

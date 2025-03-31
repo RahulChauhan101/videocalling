@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { faPhone, faVideo } from '@fortawesome/free-solid-svg-icons';
 import ActionButton from './ActionButton';
+import RecentCalls from './RecentCalls';
 import { socket } from '../communication';
 
 function useClientID() {
@@ -31,6 +32,11 @@ function MainWindow({ startCall }) {
     return () => friendID && startCall(true, friendID, config);
   };
 
+  const handleCallClick = (targetId) => {
+    setFriendID(targetId);
+    callWithVideo(true)();
+  };
+
   return (
     <div className="container main-window">
       <div>
@@ -50,14 +56,23 @@ function MainWindow({ startCall }) {
           type="text"
           className="txt-clientId"
           spellCheck={false}
-          placeholder="Your friend ID"
+          placeholder="Input friend ID"
           onChange={(event) => setFriendID(event.target.value)}
         />
         <div>
-          <ActionButton icon={faVideo} onClick={callWithVideo(true)} />
-          <ActionButton icon={faPhone} onClick={callWithVideo(false)} />
+          <ActionButton icon={faVideo} onClick={callWithVideo(true)}>
+            Video Call
+          </ActionButton>
+          <ActionButton icon={faPhone} onClick={callWithVideo(false)}>
+            Audio Call
+          </ActionButton>
         </div>
       </div>
+      
+      <RecentCalls 
+        currentUserId={clientID}
+        onCallClick={handleCallClick}
+      />
     </div>
   );
 }
