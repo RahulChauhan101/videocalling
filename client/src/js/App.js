@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import _ from 'lodash';
 import { socket, PeerConnection } from './communication';
+import { db } from './firebase';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import MainWindow from './components/MainWindow';
 import CallWindow from './components/CallWindow';
 import CallModal from './components/CallModal';
@@ -13,21 +15,24 @@ class App extends Component {
       callModal: '',
       callFrom: '',
       localSrc: null,
-      peerSrc: null
+      peerSrc: null,
+      currentUserId: null
     };
     this.pc = {};
     this.config = null;
     this.startCallHandler = this.startCall.bind(this);
     this.endCallHandler = this.endCall.bind(this);
-    this.rejectCallHandler = this.rejectCall.bind(this);
   }
 
   componentDidMount() {
     socket
+      .on('init', ({ id: currentUserId }) => {
+        this.setState({ currentUserId });
+      })
       .on('request', ({ from: callFrom }) => {
         this.setState({ callModal: 'active', callFrom });
       })
-      .on('call', (data) => {
+      .on('call', async (data) => {
         if (data.sdp) {
           this.pc.setRemoteDescription(data.sdp);
           if (data.sdp.type === 'offer') this.pc.createAnswer();
@@ -46,19 +51,35 @@ class App extends Component {
         this.setState(newState);
       })
       .on('peerStream', (src) => this.setState({ peerSrc: src }))
-      .start(isCaller);
-  }
+      .start(isCaller, config);
 
-  rejectCall() {
-    const { callFrom } = this.state;
-    socket.emit('end', { to: callFrom });
-    this.setState({ callModal: '' });
-  }
-
-  endCall(isStarter) {
-    if (_.isFunction(this.pc.stop)) {
-      this.pc.stop(isStarter);
+    try {
+      // Store call in Firebase
+      addDoc(collection(db, 'videoCalls'), {
+        callerId: this.state.currentUserId,
+        receiverId: friendID,
+        startTime: serverTimestamp(),
+        status: 'active'
+      });
+    } catch (error) {
+      console.error('Error storing call:', error);
     }
+  }
+
+  endCall(isStarter, friendID = '') {
+    try {
+      // Update call status in Firebase
+      addDoc(collection(db, 'videoCalls'), {
+        callerId: this.state.currentUserId,
+        receiverId: friendID,
+        endTime: serverTimestamp(),
+        status: 'ended'
+      });
+    } catch (error) {
+      console.error('Error updating call status:', error);
+    }
+
+    this.pc.stop(isStarter);
     this.pc = {};
     this.config = null;
     this.setState({
@@ -70,10 +91,13 @@ class App extends Component {
   }
 
   render() {
-    const { callFrom, callModal, callWindow, localSrc, peerSrc } = this.state;
+    const { callFrom, callModal, callWindow, localSrc, peerSrc, currentUserId } = this.state;
     return (
       <div>
-        <MainWindow startCall={this.startCallHandler} />
+        <MainWindow
+          clientId={currentUserId}
+          startCall={this.startCallHandler}
+        />
         {!_.isEmpty(this.config) && (
           <CallWindow
             status={callWindow}
@@ -83,11 +107,11 @@ class App extends Component {
             mediaDevice={this.pc.mediaDevice}
             endCall={this.endCallHandler}
           />
-        ) }
+        )}
         <CallModal
           status={callModal}
           startCall={this.startCallHandler}
-          rejectCall={this.rejectCallHandler}
+          rejectCall={this.endCallHandler}
           callFrom={callFrom}
         />
       </div>

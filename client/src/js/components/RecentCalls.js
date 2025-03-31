@@ -1,14 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import { db } from '../../../server/config/firebase';
+import { db } from '../firebase';
 import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
 import './RecentCalls.css';
 
 function RecentCalls({ currentUserId, onCallClick }) {
   const [recentCalls, setRecentCalls] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchRecentCalls = async () => {
+      if (!currentUserId) return;
+      
       try {
+        setLoading(true);
+        console.log('Fetching calls for user:', currentUserId);
+        
         const q = query(
           collection(db, 'videoCalls'),
           orderBy('startTime', 'desc'),
@@ -24,23 +30,39 @@ function RecentCalls({ currentUserId, onCallClick }) {
             calls.push({
               id: doc.id,
               ...data,
-              // Convert timestamp to readable format
-              startTime: data.startTime?.toDate().toLocaleString() || 'Unknown',
+              // Convert timestamp to readable format if it exists
+              startTime: data.startTime ? new Date(data.startTime.seconds * 1000).toLocaleString() : 'Unknown',
               otherPartyId: data.callerId === currentUserId ? data.receiverId : data.callerId
             });
           }
         });
+        console.log('Fetched calls:', calls);
         setRecentCalls(calls);
       } catch (error) {
         console.error('Error fetching recent calls:', error);
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchRecentCalls();
-    // Refresh every 30 seconds
-    const interval = setInterval(fetchRecentCalls, 30000);
-    return () => clearInterval(interval);
+    if (currentUserId) {
+      fetchRecentCalls();
+      // Refresh every 30 seconds
+      const interval = setInterval(fetchRecentCalls, 30000);
+      return () => clearInterval(interval);
+    }
   }, [currentUserId]);
+
+  if (loading) {
+    return (
+      <div className="recent-calls">
+        <h4>Recent Calls</h4>
+        <div className="calls-list">
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="recent-calls">
@@ -52,7 +74,7 @@ function RecentCalls({ currentUserId, onCallClick }) {
           recentCalls.map((call) => (
             <div key={call.id} className="call-item">
               <div className="call-info">
-                <span className="caller-id">{call.otherPartyId}</span>
+                <span className="caller-id">ID: {call.otherPartyId}</span>
                 <span className="call-time">{call.startTime}</span>
                 <span className={`call-status ${call.status}`}>{call.status}</span>
               </div>

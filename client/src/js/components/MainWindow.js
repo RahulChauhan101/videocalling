@@ -1,26 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { faPhone, faVideo } from '@fortawesome/free-solid-svg-icons';
 import ActionButton from './ActionButton';
 import RecentCalls from './RecentCalls';
-import { socket } from '../communication';
 
-function useClientID() {
-  const [clientID, setClientID] = useState('');
-
-  useEffect(() => {
-    socket
-      .on('init', ({ id }) => {
-        document.title = `${id} - VideoCall`;
-        setClientID(id);
-      });
-  }, []);
-
-  return clientID;
-}
-
-function MainWindow({ startCall }) {
-  const clientID = useClientID();
+function MainWindow({ startCall, clientId }) {
   const [friendID, setFriendID] = useState(null);
 
   /**
@@ -34,7 +18,8 @@ function MainWindow({ startCall }) {
 
   const handleCallClick = (targetId) => {
     setFriendID(targetId);
-    callWithVideo(true)();
+    const config = { audio: true, video: true };
+    startCall(true, targetId, config);
   };
 
   return (
@@ -45,7 +30,7 @@ function MainWindow({ startCall }) {
           <input
             type="text"
             className="txt-clientId"
-            defaultValue={clientID}
+            defaultValue={clientId}
             readOnly
           />
         </h3>
@@ -70,7 +55,7 @@ function MainWindow({ startCall }) {
       </div>
       
       <RecentCalls 
-        currentUserId={clientID}
+        currentUserId={clientId}
         onCallClick={handleCallClick}
       />
     </div>
@@ -78,7 +63,8 @@ function MainWindow({ startCall }) {
 }
 
 MainWindow.propTypes = {
-  startCall: PropTypes.func.isRequired
+  startCall: PropTypes.func.isRequired,
+  clientId: PropTypes.string
 };
 
 export default MainWindow;
